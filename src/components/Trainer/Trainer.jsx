@@ -8,24 +8,27 @@ import StatsPanel from "./StatsPanel";
 import TimesPanel from "./TimesPanel";
 import SelectTimes from "./SelectTimes";
 import saveAlgset from "../../util/saveAlgset";
+import PropTypes from 'prop-types';
 
 const Trainer = () => {
-    const [algset, setAlgset] = useState(null);
+    const [algset, setAlgset] = useState(JSON.parse(localStorage.getItem("algset")) || null);
     const [time, setTime] = useState(0);
     const [runTimer, setRunTimer] = useState(false);
     const [scramble, setScramble] = useState("");
     const [highlighted, setHighlighted] = useState(false);
-    const [savedTimes, setSavedTimes] = useState([]);
+    const [savedTimes, setSavedTimes] = useState(algset?.times || []);
     const [alg, setAlg] = useState();
     const [showSelectAlgs, setShowSelectAlgs] = useState(false);
     const [back, setBack] = useState(0);
 
     //settings
-    const [use3D, setUse3D] = useState(true);
-    const [useAUF, setUseAUF] = useState(true);
-    const [showAlg, setShowAlg] = useState(false);
-    const [cn, setCn] = useState(false);
-    const [hideCase, setHideCase] = useState(false);
+    const [settings, setSettings] = useState(JSON.parse(localStorage.getItem("settings")) || {
+        use3D: true,
+        useAUF: true,
+        showAlg: false,
+        cn: false,
+        hideCase: false,
+    });
 
     let inBetween = false;
     let hold = true;
@@ -60,46 +63,20 @@ const Trainer = () => {
     };
 
     const getScramble = async (AUF, cn) => {
-        const algset = JSON.parse(localStorage.getItem("algset"));
         if (algset) {
             const algs = algset.selectedAlgs;
-            if (algs) {
-                if (algs.length > 0) {
-                    const index = Math.floor(Math.random() * algs.length);
-                    setAlg(algs[index]);
-                    const generatedScramble = await generateScramble(
-                        algs[index].alg,
-                        AUF,
-                        cn
-                    );
-                    setScramble(generatedScramble);
-                }
+            if (algs.length > 0) {
+                const index = Math.floor(Math.random() * algs.length);
+                setAlg(algs[index]);
+                const generatedScramble = await generateScramble(algs[index].alg, AUF, cn);
+                setScramble(generatedScramble);
             }
         }
     };
 
     useEffect(() => {
-        const algset = JSON.parse(localStorage.getItem("algset"));
-        if (algset) {
-            setAlgset(algset);
-            setSavedTimes(algset.times);
-        }
-        const settings = JSON.parse(localStorage.getItem("settings"));
-        if (settings) {
-            setUse3D(settings[0]);
-            setUseAUF(settings[1]);
-            setShowAlg(settings[2]);
-            setCn(settings[3]);
-            setHideCase(settings[4]);
-            getScramble(settings[1], settings[3]);
-        } else {
-            setUse3D(true);
-            setUseAUF(true);
-            setShowAlg(false);
-            setCn(false);
-            setHideCase(false);
-            getScramble(true, false);
-        }
+        getScramble(settings.useAUF, settings.cn);
+
         document.addEventListener("keydown", handleKeyDown);
         document.addEventListener("keyup", handleKeyUp);
         return () => {
@@ -110,87 +87,34 @@ const Trainer = () => {
 
     useEffect(() => {
         if (!runTimer && time !== 0) {
-            const data = {
-                time: time,
-                scramble: scramble,
-                alg: alg.alg,
-                name: alg.name,
-            };
+            const data = { time, scramble, alg: alg?.alg, name: alg?.name };
             setSavedTimes((prev) => [...prev, data]);
             saveTime([...savedTimes, data]);
-            getScramble(useAUF, cn);
+            getScramble(settings.useAUF, settings.cn);
         }
     }, [runTimer]);
 
     const saveTime = (times) => {
-        const algset = JSON.parse(localStorage.getItem("algset"));
-        algset.times = times;
-        localStorage.setItem("algset", JSON.stringify(algset));
-        saveAlgset(algset);
+        const updatedAlgset = { ...algset, times };
+        localStorage.setItem("algset", JSON.stringify(updatedAlgset));
+        saveAlgset(updatedAlgset);
     };
 
     const handleCheck = (name) => {
-        if (name === "3d") {
-            setUse3D((prevUse3D) => {
-                const newValue = !prevUse3D;
-                saveSettings(name, newValue);
-                return newValue;
-            });
-        } else if (name === "auf") {
-            setUseAUF((prevUseAUF) => {
-                const newValue = !prevUseAUF;
-                saveSettings(name, newValue);
-                return newValue;
-            });
-        } else if (name === "showAlg") {
-            setShowAlg((prevShowAlg) => {
-                const newValue = !prevShowAlg;
-                saveSettings(name, newValue);
-                return newValue;
-            });
-        } else if (name === "cn") {
-            setCn((prevCn) => {
-                const newValue = !prevCn;
-                saveSettings(name, newValue);
-                return newValue;
-            });
-        } else if (name === "hideCase") {
-            setHideCase((prevHideCase) => {
-                const newValue = !prevHideCase;
-                saveSettings(name, newValue);
-                return newValue;
-            });
-        }
-    };
-
-    const saveSettings = (name, value) => {
-        const settings = JSON.parse(localStorage.getItem("settings")) || [
-            use3D,
-            useAUF,
-            showAlg,
-            cn,
-            hideCase,
-        ];
-        if (name === "3d") {
-            settings[0] = value;
-        } else if (name === "auf") {
-            settings[1] = value;
-        } else if (name === "showAlg") {
-            settings[2] = value;
-        } else if (name === "cn") {
-            settings[3] = value;
-        } else if (name === "hideCase") {
-            settings[4] = value;
-        }
-        localStorage.setItem("settings", JSON.stringify(settings));
+        setSettings((prevSettings) => {
+            const newSettings = { ...prevSettings, [name]: !prevSettings[name] };
+            localStorage.setItem("settings", JSON.stringify(newSettings));
+            return newSettings;
+        });
     };
 
     const handleBack = () => {
-        if (back + 1 <= savedTimes.length)
+        if (back + 1 <= savedTimes.length) {
             setBack((prev) => {
                 setScramble(savedTimes[savedTimes.length - prev - 1].scramble);
                 return prev + 1;
             });
+        }
     };
 
     const handleForward = () => {
@@ -200,7 +124,7 @@ const Trainer = () => {
                 return prev - 1;
             });
         } else {
-            getScramble(useAUF, cn);
+            getScramble(settings.useAUF, settings.cn);
         }
     };
 
@@ -265,11 +189,7 @@ const Trainer = () => {
                         </div>
                         <div className="w-[20%] h-full flex flex-col justify-between">
                             <CasePanel scramble={scramble} />
-                            {alg ? (
-                                <HintPanel alg={alg.alg} />
-                            ) : (
-                                <HintPanel alg={""} />
-                            )}
+                            <HintPanel alg={alg?.alg || ""} />
                         </div>
                         <div className="w-[20%] h-full flex flex-col justify-between">
                             <StatsPanel times={savedTimes} />
@@ -283,59 +203,34 @@ const Trainer = () => {
             </div>
             <div className="flex justify-center items-center mt-3">
                 <div className="font-bold mr-2 text-2xl">Settings:</div>
-                <div className="border rounded-xl p-1 px-2 mr-2">
-                    <input
-                        type="checkbox"
-                        className="mr-1"
-                        checked={use3D}
-                        onChange={() => handleCheck("3d")}
-                        id="3d"
-                    />
-                    <label className="text-xl">Use 3D Cube</label>
-                </div>
-                <div className="border rounded-xl p-1 px-2 mr-2">
-                    <input
-                        type="checkbox"
-                        className="mr-1"
-                        checked={useAUF}
-                        onChange={() => handleCheck("auf")}
-                        id="auf"
-                    />
-                    <label className="text-xl">Use AUF</label>
-                </div>
-                <div className="border rounded-xl p-1 px-2 mr-2">
-                    <input
-                        type="checkbox"
-                        className="mr-1"
-                        checked={showAlg}
-                        onChange={() => handleCheck("showAlg")}
-                        id="showAlg"
-                    />
-                    <label className="text-xl">Show Alg</label>
-                </div>
-                <div className="border rounded-xl p-1 px-2 mr-2">
-                    <input
-                        type="checkbox"
-                        className="mr-1"
-                        checked={cn}
-                        onChange={() => handleCheck("cn")}
-                        id="cn"
-                    />
-                    <label className="text-xl">Color Neutral</label>
-                </div>
-                <div className="border rounded-xl p-1 px-2 mr-2">
-                    <input
-                        type="checkbox"
-                        className="mr-1"
-                        checked={hideCase}
-                        onChange={() => handleCheck("hideCase")}
-                        id="hideCase"
-                    />
-                    <label className="text-xl">Hide Case</label>
-                </div>
+                {["use3D", "useAUF", "showAlg", "cn", "hideCase"].map((setting) => (
+                    <div key={setting} className="border rounded-xl p-1 px-2 mr-2">
+                        <input
+                            type="checkbox"
+                            className="mr-1"
+                            checked={settings[setting]}
+                            onChange={() => handleCheck(setting)}
+                            id={setting}
+                        />
+                        <label className="text-xl capitalize">{setting.replace("use", "Use ").replace("cn", "Color Neutral").replace("AUF", "AUF").replace("show", "Show ").replace("Case", "Case")}</label>
+                    </div>
+                ))}
             </div>
         </div>
     );
+};
+
+Trainer.propTypes = {
+    algset: PropTypes.object,
+    time: PropTypes.number,
+    runTimer: PropTypes.bool,
+    scramble: PropTypes.string,
+    highlighted: PropTypes.bool,
+    savedTimes: PropTypes.array,
+    alg: PropTypes.object,
+    showSelectAlgs: PropTypes.bool,
+    back: PropTypes.number,
+    settings: PropTypes.object
 };
 
 export default Trainer;

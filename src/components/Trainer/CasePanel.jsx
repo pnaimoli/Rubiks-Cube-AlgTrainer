@@ -3,17 +3,15 @@ import { LuMove } from "react-icons/lu";
 import "cubing/twisty";
 
 const CasePanel = ({ scramble }) => {
-    const [use3D, setUse3D] = useState();
-    const [hideCase, setHideCase] = useState();
+    const [use3D, setUse3D] = useState(true);
+    const [hideCase, setHideCase] = useState(false);
     const [puzzle, setPuzzle] = useState("3x3x3");
 
     useEffect(() => {
-        if (JSON.parse(localStorage.getItem("settings"))) {
-            setUse3D(JSON.parse(localStorage.getItem("settings"))[0]);
-            setHideCase(JSON.parse(localStorage.getItem("settings"))[4]);
-        } else {
-            setUse3D(true);
-            setHideCase(false);
+        const settings = JSON.parse(localStorage.getItem("settings"));
+        if (settings) {
+            setUse3D(settings.use3D);
+            setHideCase(settings.hideCase);
         }
         const algset = JSON.parse(localStorage.getItem("algset"));
         if (algset) {

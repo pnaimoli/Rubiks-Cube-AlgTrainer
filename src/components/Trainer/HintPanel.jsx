@@ -3,13 +3,12 @@ import { IoMdArrowDropleft, IoMdArrowDropright } from "react-icons/io";
 
 const HintPanel = ({ alg }) => {
     const [hints, setHints] = useState(0);
-    const [showAlg, setShowAlg] = useState();
+    const [showAlg, setShowAlg] = useState(false);
 
     useEffect(() => {
-        if (JSON.parse(localStorage.getItem("settings"))) {
-            setShowAlg(JSON.parse(localStorage.getItem("settings"))[2]);
-        } else {
-            setShowAlg(false);
+        const settings = JSON.parse(localStorage.getItem("settings"));
+        if (settings) {
+            setShowAlg(settings.showAlg);
         }
     });
 
