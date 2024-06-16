@@ -10,34 +10,40 @@ import SelectTimes from "./SelectTimes";
 import saveAlgset from "../../util/saveAlgset";
 import PropTypes from 'prop-types';
 
+const defaultSettings = {
+    use3D: true,
+    useAUF: true,
+    showAlg: false,
+    cn: false,
+    hideCase: false,
+};
+
 const Trainer = () => {
+    // State variables
     const [algset, setAlgset] = useState(JSON.parse(localStorage.getItem("algset")) || null);
     const [time, setTime] = useState(0);
     const [runTimer, setRunTimer] = useState(false);
     const [scramble, setScramble] = useState("");
     const [highlighted, setHighlighted] = useState(false);
     const [savedTimes, setSavedTimes] = useState(algset?.times || []);
-    const [alg, setAlg] = useState();
+    const [alg, setAlg] = useState(null);
     const [showSelectAlgs, setShowSelectAlgs] = useState(false);
     const [back, setBack] = useState(0);
 
-    //settings
-    const [settings, setSettings] = useState(JSON.parse(localStorage.getItem("settings")) || {
-        use3D: true,
-        useAUF: true,
-        showAlg: false,
-        cn: false,
-        hideCase: false,
-    });
+    // Settings state
+    const [settings, setSettings] = useState(
+        JSON.parse(localStorage.getItem("settings")) || defaultSettings
+    );
 
+    // Timer control variables
     let inBetween = false;
     let hold = true;
 
+    // Handle key down event for space bar
     const handleKeyDown = (event) => {
         if (event.code === "Space") {
             event.preventDefault();
             if (inBetween && hold && !runTimer) {
-                //stops timer
                 setRunTimer(false);
                 hold = false;
             } else if (hold) {
@@ -46,6 +52,7 @@ const Trainer = () => {
         }
     };
 
+    // Handle key up event for space bar
     const handleKeyUp = (event) => {
         if (event.code === "Space") {
             event.preventDefault();
@@ -62,6 +69,7 @@ const Trainer = () => {
         }
     };
 
+    // Fetch a new scramble based on settings
     const getScramble = async (AUF, cn) => {
         if (algset) {
             const algs = algset.selectedAlgs;
@@ -74,6 +82,7 @@ const Trainer = () => {
         }
     };
 
+    // Initialize scramble and event listeners
     useEffect(() => {
         getScramble(settings.useAUF, settings.cn);
 
@@ -85,6 +94,7 @@ const Trainer = () => {
         };
     }, []);
 
+    // Save time and fetch new scramble when timer stops
     useEffect(() => {
         if (!runTimer && time !== 0) {
             const data = { time, scramble, alg: alg?.alg, name: alg?.name };
@@ -94,12 +104,14 @@ const Trainer = () => {
         }
     }, [runTimer]);
 
+    // Save times to local storage and backend
     const saveTime = (times) => {
         const updatedAlgset = { ...algset, times };
         localStorage.setItem("algset", JSON.stringify(updatedAlgset));
         saveAlgset(updatedAlgset);
     };
 
+    // Handle settings checkbox change
     const handleCheck = (name) => {
         setSettings((prevSettings) => {
             const newSettings = { ...prevSettings, [name]: !prevSettings[name] };
@@ -108,6 +120,7 @@ const Trainer = () => {
         });
     };
 
+    // Navigate back through saved times
     const handleBack = () => {
         if (back + 1 <= savedTimes.length) {
             setBack((prev) => {
@@ -117,6 +130,7 @@ const Trainer = () => {
         }
     };
 
+    // Navigate forward through saved times
     const handleForward = () => {
         if (back > 0) {
             setBack((prev) => {
@@ -203,7 +217,7 @@ const Trainer = () => {
             </div>
             <div className="flex justify-center items-center mt-3">
                 <div className="font-bold mr-2 text-2xl">Settings:</div>
-                {["use3D", "useAUF", "showAlg", "cn", "hideCase"].map((setting) => (
+                {Object.keys(settings).map((setting) => (
                     <div key={setting} className="border rounded-xl p-1 px-2 mr-2">
                         <input
                             type="checkbox"
@@ -230,7 +244,7 @@ Trainer.propTypes = {
     alg: PropTypes.object,
     showSelectAlgs: PropTypes.bool,
     back: PropTypes.number,
-    settings: PropTypes.object
+    settings: PropTypes.object,
 };
 
 export default Trainer;
