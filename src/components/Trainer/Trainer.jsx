@@ -9,6 +9,7 @@ import TimesPanel from "./TimesPanel";
 import SelectTimes from "./SelectTimes";
 import saveAlgset from "../../util/saveAlgset";
 import PropTypes from 'prop-types';
+import './Trainer.css'; // Import the CSS file
 
 const defaultSettings = {
     use3D: true,
@@ -29,6 +30,7 @@ const Trainer = () => {
     const [alg, setAlg] = useState(null);
     const [showSelectAlgs, setShowSelectAlgs] = useState(false);
     const [back, setBack] = useState(0);
+    const [view, setView] = useState("Timer");
 
     // Settings state
     const [settings, setSettings] = useState(
@@ -38,6 +40,8 @@ const Trainer = () => {
     // Timer control variables
     let inBetween = false;
     let hold = true;
+    let holdTimeout;
+    let hold1Second = false;
 
     // Handle key down event for space bar
     const handleKeyDown = (event) => {
@@ -69,6 +73,45 @@ const Trainer = () => {
         }
     };
 
+    // Handle touch start event
+    const handleTouchStart = (event) => {
+        event.preventDefault();
+        if (inBetween && hold && !runTimer) {
+            setRunTimer(false);
+            hold = false;
+        } else if (hold) {
+            setHighlighted("red");
+            holdTimeout = setTimeout(() => {
+                setHighlighted("green");
+                hold1Second = true;
+            }, 300);
+        }
+    };
+
+    // Handle touch end event
+    const handleTouchEnd = (event) => {
+        event.preventDefault();
+        if (runTimer) {
+            setRunTimer(false);
+        } else if (!inBetween) {
+            setHighlighted("");
+            clearTimeout(holdTimeout);
+            if (hold1Second) {
+                hold1Second = false;
+                setRunTimer(true);
+                inBetween = true;
+            }
+        } else {
+            inBetween = false;
+            hold = true;
+        }
+    };
+
+    // Handle context menu event to prevent default behavior on touch devices
+    const handleContextMenu = (event) => {
+        event.preventDefault();
+    };
+
     // Fetch a new scramble based on settings
     const getScramble = async (AUF, cn) => {
         if (algset) {
@@ -93,6 +136,22 @@ const Trainer = () => {
             document.removeEventListener("keyup", handleKeyUp);
         };
     }, []);
+
+    useEffect(() => {
+        const targetDiv = document.getElementById("timer");
+        if (targetDiv) {
+            targetDiv.addEventListener("touchstart", handleTouchStart);
+            targetDiv.addEventListener("touchend", handleTouchEnd);
+            targetDiv.addEventListener("contextmenu", handleContextMenu);
+        }
+        return () => {
+            if (targetDiv) {
+                targetDiv.removeEventListener("touchstart", handleTouchStart);
+                targetDiv.removeEventListener("touchend", handleTouchEnd);
+                targetDiv.removeEventListener("contextmenu", handleContextMenu);
+            }
+        };
+    }, [view]);
 
     // Save time and fetch new scramble when timer stops
     useEffect(() => {
@@ -143,39 +202,27 @@ const Trainer = () => {
     };
 
     return (
-        <div className="lg:block hidden">
-            <SelectTimes
-                open={showSelectAlgs}
-                onClose={() => setShowSelectAlgs(false)}
-            />
-            <div className="flex justify-center font-semibold text-5xl mt-3">
-                Trainer
-            </div>
-            <div className="flex justify-center mt-4">
-                <div className="w-[90vw] max-w-[1800px] h-[70vh] max-h-[830px] justify-between flex flex-col">
-                    <div className="h-[8%] bg-gray-800 rounded-xl flex items-center justify-center text-3xl relative">
-                        <button className="absolute left-0">
+        <div className="trainer-container">
+            <SelectTimes open={showSelectAlgs} onClose={() => setShowSelectAlgs(false)} />
+            <div className="trainer-title">Trainer</div>
+            <div className="trainer-contents">
+                <div className="trainer-inner-container">
+                    <div className="scramble-panel">
+                        <button className="timer-button-left">
                             <IoMdArrowDropleft
-                                className={`text-5xl ${
-                                    back + 1 <= savedTimes.length
-                                        ? "text-white"
-                                        : "text-gray-600"
-                                }`}
+                                className={`text-5xl ${back + 1 <= savedTimes.length ? "text-white" : "text-gray-600"}`}
                                 onClick={handleBack}
                             />
                         </button>
                         {scramble}
-                        <button className="absolute right-0">
-                            <IoMdArrowDropright
-                                className="text-5xl"
-                                onClick={handleForward}
-                            />
+                        <button className="timer-button-right">
+                            <IoMdArrowDropright className="text-5xl" onClick={handleForward} />
                         </button>
                     </div>
-                    <div className="justify-between flex h-[90%]">
-                        <div className="w-[57%] h-full bg-gray-700 rounded-xl overflow-hidden flex items-center justify-center relative">
+                    <div className="bottom-panels">
+                        <div className={`timer-panel ${view !== "Timer" ? "hidden" : ""} lg:flex`} id="timer">
                             <div
-                                className="absolute top-2 text-2xl text-blue-400 cursor-pointer hover:text-blue-600"
+                                className="timer-panel-header"
                                 onClick={() => setShowSelectAlgs(true)}
                             >
                                 {algset ? algset.selectedAlgs.length : 0}{" "}
@@ -185,40 +232,37 @@ const Trainer = () => {
                                         : "case selected"
                                     : "cases selected"}
                             </div>
-                            <div
-                                className={`font-["Roboto_Mono"] text-8xl font-semibold ${
-                                    highlighted && alg && "text-green-500"
-                                } `}
-                            >
-                                {alg ? (
-                                    <Timer
-                                        runTimer={runTimer}
-                                        time={time}
-                                        setTime={setTime}
-                                    />
-                                ) : (
-                                    "--.--"
-                                )}
+                            <div className={`timer-panel-text ${highlighted && alg && "highlight"}`}>
+                                {alg ? <Timer runTimer={runTimer} time={time} setTime={setTime} /> : "--.--"}
                             </div>
                         </div>
-                        <div className="w-[20%] h-full flex flex-col justify-between">
+                        <div className={`stats-panels ${view !== "Panels" ? "hidden" : ""} lg:grid`}>
                             <CasePanel scramble={scramble} />
-                            <HintPanel alg={alg?.alg || ""} />
-                        </div>
-                        <div className="w-[20%] h-full flex flex-col justify-between">
                             <StatsPanel times={savedTimes} />
-                            <TimesPanel
-                                times={savedTimes}
-                                setSavedTimes={setSavedTimes}
-                            />
+                            <HintPanel alg={alg?.alg || ""} />
+                            <TimesPanel times={savedTimes} setSavedTimes={setSavedTimes} />
                         </div>
                     </div>
+                <div className="view-toggle-buttons">
+                    <button
+                        className="view-toggle-button"
+                        onClick={() => setView("Timer")}
+                    >
+                        Timer
+                    </button>
+                    <button
+                        className="view-toggle-button"
+                        onClick={() => setView("Panels")}
+                    >
+                        Panels
+                    </button>
+                </div>
                 </div>
             </div>
-            <div className="flex justify-center items-center mt-3">
-                <div className="font-bold mr-2 text-2xl">Settings:</div>
+            <div className="settings">
+                <div className="settings-title">Settings:</div>
                 {Object.keys(settings).map((setting) => (
-                    <div key={setting} className="border rounded-xl p-1 px-2 mr-2">
+                    <div key={setting} className="settings-item">
                         <input
                             type="checkbox"
                             className="mr-1"
@@ -226,7 +270,11 @@ const Trainer = () => {
                             onChange={() => handleCheck(setting)}
                             id={setting}
                         />
-                        <label className="text-xl capitalize">{setting.replace("use", "Use ").replace("cn", "Color Neutral").replace("AUF", "AUF").replace("show", "Show ").replace("Case", "Case")}</label>
+                        <label className="settings-label">
+                            {setting.replace("use3D", "Use 3D Cube").replace("useAUF", "Use AUF")
+                                    .replace("cn", "Color Neutral").replace("AUF", "AUF").replace("show", "Show ")
+                                    .replace("hide", "Hide ")}
+                        </label>
                     </div>
                 ))}
             </div>

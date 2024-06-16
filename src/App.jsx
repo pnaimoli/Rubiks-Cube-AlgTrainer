@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import Table from "./components/Table/Table";
 import Trainer from "./components/Trainer/Trainer";
 import TableMobile from "./components/Table/TableMobile";
-import TrainerMobile from "./components/Trainer/TrainerMobile";
 import Welcome from "./components/Welcome";
 
 const App = () => {
@@ -64,7 +63,6 @@ const App = () => {
                 </>
             ) : (
                 <>
-                    <TrainerMobile />
                     <Trainer />
                 </>
             )}

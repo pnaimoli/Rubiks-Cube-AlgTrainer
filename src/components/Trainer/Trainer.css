@@ -1,0 +1,79 @@
+/* Trainer.css */
+
+/* Common styles */
+.trainer-container {
+    @apply block;
+}
+
+.trainer-title {
+    @apply flex justify-center font-semibold text-5xl mt-1 lg:mt-3;
+}
+
+.trainer-contents {
+    @apply flex justify-center mt-2 lg:mt-4;
+}
+
+.trainer-inner-container {
+    @apply flex flex-col w-[90vw] lg:max-w-[1800px] lg:h-[70vh] lg:max-h-[830px] lg:justify-between;
+}
+
+.scramble-panel {
+    @apply h-[60px] text-xl px-10 mb-2 bg-gray-800 rounded-xl flex items-center justify-center lg:h-[8%] lg:text-3xl lg:px-0 lg:mb-0 relative;
+
+}
+
+.bottom-panels {
+    @apply justify-between flex;
+}
+
+.timer-panel {
+    @apply rounded-xl overflow-hidden flex items-center justify-center relative bg-gray-700 h-[50vh] lg:h-auto w-full select-none lg:select-auto lg:w-[75%];
+}
+
+.timer-button-left {
+    @apply absolute left-0;
+}
+
+.timer-button-right {
+    @apply absolute right-0;
+}
+
+.timer-panel-header {
+    @apply absolute top-2 text-2xl text-blue-400 cursor-pointer hover:text-blue-600;
+}
+
+.timer-panel-text {
+    @apply font-["Roboto_Mono"] text-6xl lg:text-8xl font-semibold;
+}
+
+.highlight {
+    @apply text-green-500;
+}
+
+.stats-panels {
+    @apply lg:w-[50%] grid grid-cols-2 gap-2 ml-2;
+}
+
+.view-toggle-buttons {
+    @apply flex justify-between mt-2 lg:hidden;
+}
+
+.view-toggle-button {
+    @apply w-[49%] bg-gray-800 rounded-xl py-1;
+}
+
+.settings {
+    @apply flex justify-center items-center mt-2 lg:mt-3;
+}
+
+.settings-title {
+    @apply font-bold mr-2 text-xl lg:text-2xl;
+}
+
+.settings-item {
+    @apply border border-gray-300 rounded-xl p-1 px-2 mr-2;
+}
+
+.settings-label {
+    @apply text-sm lg:text-xl;
+}

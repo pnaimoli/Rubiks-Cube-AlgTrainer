@@ -36,7 +36,7 @@ const TimesPanel = ({ times, setSavedTimes }) => {
     };
 
     return (
-        <div className="lg:h-[48.5%] h-[30vh] bg-gray-700 rounded-xl overflow-hidden flex flex-col">
+        <div className="h-[30vh] bg-gray-700 rounded-xl overflow-hidden flex flex-col">
             <div className="flex justify-center font-semibold text-xl bg-gray-800 p-1 items-center">
                 Times
             </div>
