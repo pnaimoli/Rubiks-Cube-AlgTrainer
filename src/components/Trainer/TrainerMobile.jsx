@@ -6,7 +6,7 @@ import HintPanel from "./HintPanel";
 import StatsPanel from "./StatsPanel";
 import TimesPanel from "./TimesPanel";
 import SelectTimes from "./SelectTimes";
-import TimerMobile from "./TimerMobile";
+import Timer from "./Timer";
 import saveAlgset from "../../util/saveAlgset";
 
 const TrainerMobile = () => {
@@ -287,7 +287,7 @@ const TrainerMobile = () => {
                                     } `}
                                 >
                                     {alg ? (
-                                        <TimerMobile
+                                        <Timer
                                             runTimer={runTimer}
                                             time={time}
                                             setTime={setTime}
